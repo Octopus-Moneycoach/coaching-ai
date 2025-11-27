@@ -277,3 +277,5 @@ eval_output/
 golden_dataset_results/
 scripts/collect_golden_dataset_api.py
 scripts/upload_golden_dataset.py
+scripts/export_golden_dataset_to_s3.py
+scripts/delete_old_case_checks.py
