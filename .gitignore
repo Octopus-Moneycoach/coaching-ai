@@ -279,3 +279,13 @@ scripts/collect_golden_dataset_api.py
 scripts/upload_golden_dataset.py
 scripts/export_golden_dataset_to_s3.py
 scripts/delete_old_case_checks.py
+scripts/download_and_parse_pdfs.py
+scripts/extract_topic_level_from_api.py
+
+# RAG evaluation scripts and outputs (analysis/testing only)
+scripts/evaluate_*.py
+scripts/test_*.py
+scripts/*evaluation*.json
+scripts/*evaluation*.txt
+scripts/*evaluation*.log
+scripts/*comparison*.json
