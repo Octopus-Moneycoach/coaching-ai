@@ -289,3 +289,53 @@ scripts/*evaluation*.json
 scripts/*evaluation*.txt
 scripts/*evaluation*.log
 scripts/*comparison*.json
+
+# POC Analysis - Generated Data Files
+scripts/*.csv
+scripts/*.pkl
+scripts/*.json
+scripts/*.log
+scripts/*_log.txt
+
+# POC Analysis - Temporary scripts (one-off analysis)
+scripts/analyze_*.py
+scripts/check_*.py
+scripts/compare_*.py
+scripts/enrich_*.py
+scripts/generate_coach_analytics.py
+scripts/generate_comparison_*.py
+scripts/generate_dashboard_data.py
+scripts/generate_official_17_comparison.py
+scripts/generate_three_way_charts.py
+scripts/generate_*_only_comparison.py
+scripts/import_ai_results_to_dynamodb.py
+scripts/process_remaining_meetings.py
+scripts/process_missing_*.py
+scripts/run_case_checks_via_api.py
+scripts/run_*_on_golden_dataset.py
+scripts/three_way_comparison.py
+scripts/diagnose_*.py
+scripts/verify_*.py
+scripts/fetch_*.py
+scripts/fetch_*.sh
+
+# POC Analysis - Generated HTML/Images
+scripts/*.html
+scripts/*.png
+
+# Aveni API Response Cache
+scripts/aveni_api_responses/
+scripts/aveni_api_response_*.json
+
+# Evals directory (separate evaluation system)
+evals/
+
+# POC Analysis - DataFrame creation and reporting (one-off scripts)
+scripts/create_aveni_assessment_dataframe.py
+scripts/create_comparison_dataframe.py
+scripts/create_human_assessment_dataframe.py
+scripts/create_your_ai_assessment_dataframe.py
+scripts/generate_stakeholder_report.py
+scripts/import_aveni_api_to_dynamodb.py
+scripts/import_aveni_from_api_results.py
+scripts/import_aveni_from_golden_dataset.py

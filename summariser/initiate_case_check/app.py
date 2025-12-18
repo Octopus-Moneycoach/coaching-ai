@@ -314,10 +314,12 @@ def _start_step_function(
     }
 
     # If redacted transcript key is provided, use it directly
+    # Coach name not needed - transcript already processed and normalized
     if redacted_transcript_key:
         input_data["redactedTranscriptKey"] = redacted_transcript_key
     else:
         # Otherwise, provide transcript source information
+        # Coach name needed for role normalization step
         if coach_name:
             input_data["coachName"] = coach_name
 
