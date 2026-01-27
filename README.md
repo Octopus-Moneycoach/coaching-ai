@@ -1,47 +1,75 @@
-# Call Summariser AI
+# Coaching AI
 
 ## Overview
 
-Call Summariser AI is an automated system that processes business call recordings and produces structured summaries enriched with insights and compliance checks.  The service records calls or ingests transcripts, redacts personally identifiable information (PII), converts the speech to text (if necessary), and uses large‑language‑model (LLM) analysis to generate rich summaries.  Each summary includes:
+Coaching AI is an automated system that processes coaching call recordings and produces structured summaries enriched with insights, compliance checks, and vulnerability assessments. The service ingests call transcripts, redacts personally identifiable information (PII), and uses large‑language‑model (LLM) analysis powered by Amazon Bedrock to generate comprehensive summaries. Each summary includes:
 
-* **Key points and themes** – the main discussion topics extracted from the call.
-* **Action items** – follow‑up tasks for participants.
-* **Sentiment and quality scores** – indications of how the call went.
-* **Compliance checks** – optional rules that evaluate whether the call meets business or regulatory requirements.
+* **Key points and themes** – the main discussion topics extracted from the call
+* **Action items** – follow‑up tasks for participants
+* **Sentiment and quality scores** – indicators of call quality and engagement
+* **Compliance checks** – configurable rules that evaluate whether the call meets business or regulatory requirements
+* **Vulnerability assessments** – deep analysis of client well-being and risk factors when vulnerabilities are detected
 
-A web‑based dashboard (not yet public) is used for analytics, version comparison and further insights.
+The system features a continuous learning pipeline that collects ground truth feedback from coaches and exports it to a golden dataset for model improvement and evaluation.
 
 ## Process Flow
 
-The system is built on AWS using Lambda functions, AWS Step Functions and DynamoDB.  A high‑level overview of the processing pipeline is:
+The system is built on AWS using Lambda functions, AWS Step Functions, DynamoDB, and EventBridge. There are two primary workflows:
 
-1. **Initiate summary (`POST /summarise`)** – Clients submit a request with a `meetingId` and either a transcript or a Zoom meeting ID.  The API validates the request, stores a job record in DynamoDB and starts a Step Functions workflow execution.
-2. **Step Functions workflow orchestration** – A state machine coordinates the following steps:
-   * **Fetch transcript** – Retrieves the transcript from the request or fetches it from Zoom via their API.
-   * **Normalize roles** – Standardizes speaker labels (e.g., COACH and CLIENT).
-   * **PII detection & redaction** – Uses Amazon Comprehend to detect and redact personally identifiable information.
-   * **Summarize** – Calls a Bedrock LLM to generate a structured summary with themes, action items and sentiment analysis.
-   * **Validate & repair** – Validates the LLM output JSON and attempts repairs if needed.
-   * **Case check (optional)** – If enabled, runs a second LLM prompt that applies compliance rules in parallel with summarization.
-   * **Persist summary** – Saves the validated summary to S3 and updates DynamoDB.
-   * **A2I review (optional)** – If the pass‑rate falls below a threshold or there is a high‑severity failure, initiates a human review loop via Amazon A2I.
-   * **Update status** – Updates the final job status in DynamoDB.
-3. **Human review (optional)** – For flagged jobs, the system initiates a human review loop via Amazon A2I.  A separate poller Lambda monitors completion and updates the job status back to `COMPLETED` along with the reviewer's decision and comments.
-4. **Retrieve results** – Clients can:
-   * List completed summaries with `GET /summaries`.
-   * Check the status of a job and fetch a pre‑signed summary JSON with `GET /status?meetingId`.
-   * Download case‑check reports with `GET /case?meetingId`.
+### 1. Summary Workflow (`POST /summarise`)
 
-Summaries and case‑check reports are stored in Amazon S3, and object keys are recorded in DynamoDB for retrieval.
+Clients submit a request with a `meetingId` and transcript. The API validates the request, stores a job record in DynamoDB, and starts a Step Functions workflow:
+
+* **Fetch transcript** – Retrieves the transcript from the request or fetches it from Zoom via their API
+* **Normalize roles** – Standardizes speaker labels (e.g., COACH and CLIENT)
+* **PII detection & redaction** – Uses Amazon Comprehend to detect and redact personally identifiable information
+* **Summarize** – Calls Amazon Bedrock (Claude 3.7 Sonnet) to generate a structured summary with themes, action items, and sentiment analysis
+* **Validate & repair** – Validates the LLM output JSON and attempts repairs if needed
+* **Persist summary** – Saves the validated summary to S3 and updates DynamoDB
+* **Update status** – Updates the final job status in DynamoDB
+
+### 2. Case Check Workflow (`POST /case-check`)
+
+A separate independent workflow for compliance checking and vulnerability assessment:
+
+* **Fetch & normalize transcript** – Same as summary workflow
+* **PII detection & redaction** – Same as summary workflow
+* **Case check** – Applies configurable compliance rules using Bedrock with optional RAG (Retrieval-Augmented Generation) from a knowledge base
+* **Vulnerability assessment** – If vulnerabilities are detected, performs a deep analysis of client well-being and risk factors
+* **A2I review (optional)** – For high-severity findings or low pass rates, initiates human review via Amazon A2I
+* **Update status** – Updates the assessment status in DynamoDB
+
+### 3. Ground Truth Collection
+
+A continuous feedback loop for model improvement:
+
+* **Coach review workflow** – Coaches review assessments via `GET /reviews/pending` and submit corrections via `POST /review`
+* **DynamoDB Streams processor** – Automatically exports reviewed assessments to a golden dataset in S3
+* **Golden dataset** – Versioned training data stored in S3 for model evaluation and fine-tuning
+
+### 4. Retrieve Results
+
+* `GET /summaries` – List completed summaries
+* `GET /status?meetingId=<id>` – Check job status and get pre-signed URL for summary JSON
+* `GET /case?meetingId=<id>` – Get pre-signed URL for case-check report
+* `GET /transcript/{meetingId}` – Retrieve redacted transcript
+* `GET /health` – System health check
+
+All summaries, case-check reports, and transcripts are stored in Amazon S3 with Athena-partitioned paths for analytics.
 
 ## API Endpoints
 
 | Endpoint & Method | Description |
 | --- | --- |
-| `POST /summarise` | Create a new summarisation job for a meeting ID and transcript or Zoom recording ID.  Returns a job identifier. |
+| `POST /summarise` | Create a new summarisation job for a meeting ID and transcript. Returns a job identifier. |
+| `POST /case-check` | Create a new case check and vulnerability assessment job. Returns an assessment identifier. |
 | `GET /summaries` | List existing summary jobs and their statuses. |
 | `GET /status?meetingId=<id>` | Retrieve the current status of a job and, if completed, obtain a pre‑signed URL for the summary JSON. |
-| `GET /case?meetingId=<id>` | Retrieve a pre‑signed URL for the case‑check report (when case checking is enabled). |
+| `GET /case?meetingId=<id>` | Retrieve a pre‑signed URL for the case‑check report. |
+| `GET /transcript/{meetingId}` | Retrieve the redacted transcript for a specific meeting. |
+| `GET /reviews/pending` | Fetch pending assessments awaiting coach review. |
+| `POST /review` | Submit coach feedback and corrections for an assessment. |
+| `GET /health` | System health check endpoint. |
 
 ## Output Format
 
@@ -92,23 +120,130 @@ The summary endpoint returns structured JSON similar to the following (fields om
 }
 ```
 
-Case‑check results include a checklist of compliance tests with statuses (`Pass`, `NotApplicable`, etc.), evidence spans and explanatory comments, along with an overall pass rate and any high‑severity flags.
+### Case Check Output
 
-## Roadmap
+Case‑check results include a checklist of compliance tests with detailed findings:
 
-The project is actively evolving.  Upcoming tasks include prompt and schema version management, repository cleanup, extending case‑check coverage, implementing retrieval‑augmented summarisation, prototyping real‑time summarisation, building a continuous evaluation pipeline and standardising logging.
+```json
+{
+  "meeting_id": "<meetingId>",
+  "assessment_type": "case_check",
+  "checklist": [
+    {
+      "check_id": "CC001",
+      "status": "Pass",
+      "severity": "medium",
+      "finding": "Coach established rapport...",
+      "evidence_spans": ["line 5-8"],
+      "suggestion": null
+    }
+  ],
+  "overall_pass_rate": 0.85,
+  "high_severity_failures": [],
+  "vulnerabilities_detected": true,
+  "vulnerability_assessment": {
+    "severity": "high",
+    "risk_factors": ["chronic pain", "medication concerns"],
+    "recommended_actions": ["Refer to medical professional"]
+  }
+}
+```
+
+## Key Features
+
+### Prompt Management
+The system uses AWS Systems Manager Parameter Store for centralized prompt versioning and management. Prompts are versioned and can be updated without code deployment.
+
+### RAG-Enhanced Case Checking
+Optional knowledge base integration using Amazon Bedrock Knowledge Bases for retrieval-augmented generation, allowing case checks to reference organizational policies and best practices.
+
+### Vulnerability Assessment
+Automated detection and assessment of client vulnerabilities (health concerns, emotional distress, safeguarding issues) with severity scoring and recommended coach actions.
+
+### Golden Dataset Pipeline
+DynamoDB Streams-powered automation that collects coach reviews and exports them to S3 as training data for continuous model improvement.
+
+### Two-Stage Workflow Architecture
+Decoupled summary and case-check workflows allow independent execution, parallel processing, and targeted re-runs of specific analysis types.
 
 ## Technology Stack
 
-This project uses:
+* **AWS Lambda** (Python 3.11) – serverless functions for API, processing, and streaming
+* **AWS Step Functions** – orchestrates summary and case-check workflows
+* **Amazon DynamoDB** – stores job status, assessment results, and metadata with TTL and streams
+* **Amazon S3** – Athena-partitioned storage for summaries, transcripts, case-checks, and golden datasets
+* **Amazon Bedrock** – Claude 3.7 Sonnet for summarization, case checking, and vulnerability assessment
+* **Amazon Bedrock Knowledge Bases** – optional RAG for enhanced case checking
+* **Amazon Comprehend** – PII detection and redaction
+* **Amazon A2I (Augmented AI)** – human-in-the-loop review for high-severity findings
+* **AWS Systems Manager Parameter Store** – centralized prompt and configuration management
+* **Amazon EventBridge** – event-driven architecture for workflow coordination
+* **AWS SAM** – Infrastructure as Code for deployment
 
-* **AWS Lambda** – serverless functions for the API layer, summary processing and polling.
-* **AWS Step Functions** – orchestrates the workflow for transcript processing, summarization and compliance checks.
-* **Amazon DynamoDB** – durable storage for job metadata and object keys.
-* **Amazon S3** – storage for summaries and case‑check reports.
-* **Bedrock (Claude)** – large language model for summarisation and compliance prompting.
-* **Amazon A2I** – optional human‑in‑the‑loop review of flagged summaries.
+### Python Dependencies
+* **boto3** – AWS SDK
+* **pydantic** – data validation and schema management
+* **requests** – HTTP client for Zoom API integration
+
+## Deployment
+
+The system is deployed using AWS SAM (Serverless Application Model):
+
+```bash
+# Build the application
+sam build
+
+# Deploy to AWS
+sam deploy --guided
+```
+
+### Configuration Options
+
+The [template.yaml](template.yaml) supports the following parameters:
+
+* `SummaryBucketName` – Optionally use an existing S3 bucket for summaries (creates new bucket if empty)
+* `GoldenDataBucketName` – Optionally use an existing S3 bucket for training data (creates new bucket if empty)
+
+### Environment Variables
+
+Key environment variables are configured in `template.yaml`:
+
+* `MODEL_VERSION` – Currently `bedrock:claude-3-7-sonnet-20250219`
+* `SUMMARY_SCHEMA_VERSION` – Current schema version `1.2`
+* `USE_KNOWLEDGE_BASE` – Enable/disable RAG integration (`true`/`false`)
+* `USE_PROMPT_MANAGEMENT` – Enable centralized prompt management (`true`)
+* `SAVE_TRANSCRIPTS` – Store transcripts in S3 (`true`)
+
+## Project Structure
+
+```
+.
+├── summariser/              # Lambda function code
+│   ├── fetch_transcript/    # Zoom API integration
+│   ├── normalise_roles/     # Speaker label normalization
+│   ├── pii_detect_redact/   # PII handling
+│   ├── summarise/           # Summary generation
+│   ├── case_check/          # Compliance checking
+│   ├── assess_vulnerability/# Vulnerability analysis
+│   ├── persist_summary/     # S3 persistence
+│   ├── feedback_stream_processor/  # Golden dataset export
+│   └── utils/               # Shared utilities
+├── statemachine/            # Step Functions definitions
+├── layers/                  # Shared Python dependencies
+├── setup/                   # Setup scripts and utilities
+├── docs/                    # Documentation
+└── template.yaml            # SAM infrastructure template
+```
+
+## Documentation
+
+* [Quick Start Guide](docs/guides/QUICK_START.md)
+* [Deployment Checklist](docs/guides/DEPLOYMENT_CHECKLIST.md)
+* [Knowledge Base Setup](docs/guides/KNOWLEDGE_BASE_SETUP.md)
+* [Case Check Architecture](docs/CASE_CHECK_ARCHITECTURE.md)
+* [Vulnerability Assessment Setup](docs/VULNERABILITY_ASSESSMENT_SETUP.md)
+* [Ground Truth Workflow](docs/GOLDEN_DATA_WORKFLOW.md)
 
 ## Contributing
 
-Contributions are welcome!  Please fork the repository, create a feature branch and open a pull request describing your changes.  For significant changes or new functionality, please open an issue first to discuss the proposal.
+Contributions are welcome! Please fork the repository, create a feature branch, and open a pull request describing your changes. For significant changes or new functionality, please open an issue first to discuss the proposal.
