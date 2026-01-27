@@ -2,6 +2,24 @@ AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: Meeting Summariser - Async Agentic Flow
 
+Parameters:
+  SummaryBucketName:
+    Type: String
+    Description: Name of existing S3 bucket for summaries and transcripts
+    Default: ""
+  GoldenDataBucketName:
+    Type: String
+    Description: Name of existing S3 bucket for training data
+    Default: ""
+
+Conditions:
+  CreateSummaryBucket: !Equals
+    - !Ref SummaryBucketName
+    - ""
+  CreateGoldenDataBucket: !Equals
+    - !Ref GoldenDataBucketName
+    - ""
+
 Globals:
   Function:
     Timeout: 30
@@ -25,7 +43,7 @@ Globals:
         # Knowledge Base Configuration
         # KNOWLEDGE_BASE_ID is read from Parameter Store at runtime
         KNOWLEDGE_BASE_PARAM_NAME: "/call-summariser/knowledge-base-id"
-        USE_KNOWLEDGE_BASE: "true"
+        USE_KNOWLEDGE_BASE: "false"
         # Prompt Management Configuration
         USE_PROMPT_MANAGEMENT: "true"
         PROMPT_PARAM_NAME_SUMMARY: "/call-summariser/prompts/summary/current"
@@ -35,9 +53,9 @@ Globals:
         A2I_PORTAL_URL: ""
         # DynamoDB tables and S3 buckets - set globally for all Lambdas
         SUMMARY_JOB_TABLE: !Ref SummaryJobTable
-        SUMMARY_BUCKET: !Ref SummaryBucket
+        SUMMARY_BUCKET: !If [CreateSummaryBucket, !Ref SummaryBucket, !Ref SummaryBucketName]
         ASSESSMENT_RESULTS_TABLE: !Ref AssessmentResultsTable
-        GOLDEN_DATA_BUCKET: !Ref GoldenDataBucket
+        GOLDEN_DATA_BUCKET: !If [CreateGoldenDataBucket, !Ref GoldenDataBucket, !Ref GoldenDataBucketName]
         CASE_CHECK_DEFINITIONS_TABLE: !Ref CaseCheckDefinitionsTable
 
 Resources:
@@ -63,6 +81,7 @@ Resources:
   ### S3 Bucket for Summaries ###
   SummaryBucket:
     Type: AWS::S3::Bucket
+    Condition: CreateSummaryBucket
     Properties:
       BucketEncryption:
         ServerSideEncryptionConfiguration:
@@ -82,6 +101,7 @@ Resources:
   ### S3 Bucket for Golden Data (ML Training Datasets) ###
   GoldenDataBucket:
     Type: AWS::S3::Bucket
+    Condition: CreateGoldenDataBucket
     Properties:
       BucketName: !Sub "${AWS::StackName}-golden-data"
       BucketEncryption:
@@ -328,7 +348,7 @@ Resources:
       MemorySize: 512
       Policies:
         - S3CrudPolicy:
-            BucketName: !Ref SummaryBucket
+            BucketName: !If [CreateSummaryBucket, !Ref SummaryBucket, !Ref SummaryBucketName]
         - Statement:
             - Effect: Allow
               Action:
@@ -349,7 +369,7 @@ Resources:
       MemorySize: 256
       Policies:
         - S3CrudPolicy:
-            BucketName: !Ref SummaryBucket
+            BucketName: !If [CreateSummaryBucket, !Ref SummaryBucket, !Ref SummaryBucketName]
 
   PIIDetectRedactFunction:
     Type: AWS::Serverless::Function
@@ -363,7 +383,7 @@ Resources:
       MemorySize: 512
       Policies:
         - S3CrudPolicy:
-            BucketName: !Ref SummaryBucket
+            BucketName: !If [CreateSummaryBucket, !Ref SummaryBucket, !Ref SummaryBucketName]
         - Statement:
             - Effect: Allow
               Action:
@@ -382,7 +402,7 @@ Resources:
       MemorySize: 1024
       Policies:
         - S3CrudPolicy:
-            BucketName: !Ref SummaryBucket
+            BucketName: !If [CreateSummaryBucket, !Ref SummaryBucket, !Ref SummaryBucketName]
         - Statement:
             - Effect: Allow
               Action:
@@ -411,7 +431,7 @@ Resources:
       MemorySize: 512
       Policies:
         - S3CrudPolicy:
-            BucketName: !Ref SummaryBucket
+            BucketName: !If [CreateSummaryBucket, !Ref SummaryBucket, !Ref SummaryBucketName]
         - Statement:
             - Effect: Allow
               Action:
@@ -440,7 +460,7 @@ Resources:
       MemorySize: 1024
       Policies:
         - S3CrudPolicy:
-            BucketName: !Ref SummaryBucket
+            BucketName: !If [CreateSummaryBucket, !Ref SummaryBucket, !Ref SummaryBucketName]
         - DynamoDBCrudPolicy:
             TableName: !Ref AssessmentResultsTable
         - DynamoDBReadPolicy:
@@ -483,7 +503,7 @@ Resources:
           PROMPT_PARAM_NAME_VULNERABILITY: /call-summariser/prompts/vulnerability-assessment/current
       Policies:
         - S3ReadPolicy:
-            BucketName: !Ref SummaryBucket
+            BucketName: !If [CreateSummaryBucket, !Ref SummaryBucket, !Ref SummaryBucketName]
         - DynamoDBCrudPolicy:
             TableName: !Ref AssessmentResultsTable
         - Statement:
@@ -514,7 +534,7 @@ Resources:
       MemorySize: 512
       Policies:
         - S3CrudPolicy:
-            BucketName: !Ref SummaryBucket
+            BucketName: !If [CreateSummaryBucket, !Ref SummaryBucket, !Ref SummaryBucketName]
         - DynamoDBCrudPolicy:
             TableName: !Ref AssessmentResultsTable
 
@@ -530,7 +550,7 @@ Resources:
       MemorySize: 256
       Policies:
         - S3CrudPolicy:
-            BucketName: !Ref SummaryBucket
+            BucketName: !If [CreateSummaryBucket, !Ref SummaryBucket, !Ref SummaryBucketName]
         - Statement:
             - Effect: Allow
               Action:
@@ -572,7 +592,7 @@ Resources:
             Method: post
       Policies:
         - S3ReadPolicy:
-            BucketName: !Ref SummaryBucket
+            BucketName: !If [CreateSummaryBucket, !Ref SummaryBucket, !Ref SummaryBucketName]
         - DynamoDBCrudPolicy:
             TableName: !Ref SummaryJobTable
         - Statement:
@@ -601,7 +621,7 @@ Resources:
             Method: post
       Policies:
         - S3ReadPolicy:
-            BucketName: !Ref SummaryBucket
+            BucketName: !If [CreateSummaryBucket, !Ref SummaryBucket, !Ref SummaryBucketName]
         - DynamoDBCrudPolicy:
             TableName: !Ref SummaryJobTable
         - Statement:
@@ -630,7 +650,7 @@ Resources:
         - DynamoDBReadPolicy:
             TableName: !Ref SummaryJobTable
         - S3ReadPolicy:
-            BucketName: !Ref SummaryBucket
+            BucketName: !If [CreateSummaryBucket, !Ref SummaryBucket, !Ref SummaryBucketName]
 
   ListSummariesFunction:
     Type: AWS::Serverless::Function
@@ -650,7 +670,7 @@ Resources:
         - DynamoDBReadPolicy:
             TableName: !Ref SummaryJobTable
         - S3ReadPolicy:
-            BucketName: !Ref SummaryBucket
+            BucketName: !If [CreateSummaryBucket, !Ref SummaryBucket, !Ref SummaryBucketName]
 
   GetCaseUrlFunction:
     Type: AWS::Serverless::Function
@@ -670,7 +690,7 @@ Resources:
         - DynamoDBReadPolicy:
             TableName: !Ref SummaryJobTable
         - S3ReadPolicy:
-            BucketName: !Ref SummaryBucket
+            BucketName: !If [CreateSummaryBucket, !Ref SummaryBucket, !Ref SummaryBucketName]
 
   ### GET /reviews/pending - Fetch pending assessments (all types) ###
   GetPendingReviewsFunction:
@@ -750,7 +770,7 @@ Resources:
             Method: options
       Policies:
         - S3ReadPolicy:
-            BucketName: !Ref SummaryBucket
+            BucketName: !If [CreateSummaryBucket, !Ref SummaryBucket, !Ref SummaryBucketName]
 
   ### A2I Review Poller (flip IN_REVIEW -> COMPLETED)
   ReviewPollerFunction:
@@ -773,9 +793,9 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref SummaryJobTable
         - S3ReadPolicy:
-            BucketName: !Ref SummaryBucket
+            BucketName: !If [CreateSummaryBucket, !Ref SummaryBucket, !Ref SummaryBucketName]
         - S3CrudPolicy:
-            BucketName: !Ref SummaryBucket
+            BucketName: !If [CreateSummaryBucket, !Ref SummaryBucket, !Ref SummaryBucketName]
         - Statement:
             - Effect: Allow
               Action:
@@ -808,9 +828,9 @@ Resources:
         - DynamoDBReadPolicy:
             TableName: !Ref AssessmentResultsTable
         - S3CrudPolicy:
-            BucketName: !Ref GoldenDataBucket
+            BucketName: !If [CreateGoldenDataBucket, !Ref GoldenDataBucket, !Ref GoldenDataBucketName]
         - S3ReadPolicy:
-            BucketName: !Ref SummaryBucket
+            BucketName: !If [CreateSummaryBucket, !Ref SummaryBucket, !Ref SummaryBucketName]
 
   ### Health Check Endpoint ###
   HealthCheckFunction:
@@ -837,7 +857,7 @@ Resources:
         - DynamoDBReadPolicy:
             TableName: !Ref SummaryJobTable
         - S3ReadPolicy:
-            BucketName: !Ref SummaryBucket
+            BucketName: !If [CreateSummaryBucket, !Ref SummaryBucket, !Ref SummaryBucketName]
         - Statement:
             - Effect: Allow
               Action:
