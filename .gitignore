@@ -260,9 +260,11 @@ kb-*.txt
 # Not ready for commit
 DATA_ARCHITECTURE.md
 
-# Documentation
-docs/*
+# Knowledge base source documents (not code documentation)
 kb-docs/*
+
+# Archived documentation (outdated, references non-existent scripts)
+docs/archived/*
 
 # Prompt Management generated files (ARNs are environment-specific)
 setup/prompt_management/prompt_arns.json

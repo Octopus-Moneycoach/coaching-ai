@@ -240,9 +240,9 @@ Key environment variables are configured in `template.yaml`:
 * [Quick Start Guide](docs/guides/QUICK_START.md)
 * [Deployment Checklist](docs/guides/DEPLOYMENT_CHECKLIST.md)
 * [Knowledge Base Setup](docs/guides/KNOWLEDGE_BASE_SETUP.md)
-* [Case Check Architecture](docs/CASE_CHECK_ARCHITECTURE.md)
-* [Vulnerability Assessment Setup](docs/VULNERABILITY_ASSESSMENT_SETUP.md)
-* [Ground Truth Workflow](docs/GOLDEN_DATA_WORKFLOW.md)
+* [Case Check Architecture](docs/technical/CASE_CHECK_ARCHITECTURE.md)
+* [Vulnerability Assessment Setup](docs/guides/VULNERABILITY_ASSESSMENT_SETUP.md)
+* [Ground Truth Workflow](docs/guides/GOLDEN_DATA_WORKFLOW.md)
 
 ## Contributing
 
