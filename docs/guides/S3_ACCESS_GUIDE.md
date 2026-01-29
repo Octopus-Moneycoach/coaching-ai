@@ -34,7 +34,7 @@ s3://call-summariser-summarybucket-3wtnjhb9vvq0/implementation-docs/
 ### Option 1: AWS Console (Web Browser)
 
 1. **Navigate to S3**:
-   - Go to: https://s3.console.aws.amazon.com/s3/buckets/call-summariser-summarybucket-3wtnjhb9vvq0
+   - Go to: https://eu-west-2.console.aws.amazon.com/s3/buckets/call-summariser-summarybucket-3wtnjhb9vvq0?region=eu-west-2
    - Navigate to: `implementation-docs/`
 
 2. **View HTML Index**:
@@ -121,7 +121,7 @@ aws s3api put-public-access-block \
     "BlockPublicAcls=false,IgnorePublicAcls=false,BlockPublicPolicy=false,RestrictPublicBuckets=false"
 ```
 
-**Access URL**: `http://call-summariser-summarybucket-3wtnjhb9vvq0.s3-website-{region}.amazonaws.com/implementation-docs/index.html`
+**Access URL**: `http://call-summariser-summarybucket-3wtnjhb9vvq0.s3-website-eu-west-2.amazonaws.com/implementation-docs/index.html`
 
 ⚠️ **Warning**: Only do this if documentation doesn't contain sensitive information!
 

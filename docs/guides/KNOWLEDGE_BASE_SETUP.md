@@ -61,7 +61,7 @@ You can add metadata to help with retrieval:
 
 ```bash
 # Set your AWS region
-AWS_REGION="us-east-1"
+AWS_REGION="eu-west-2"
 BUCKET_NAME="call-summariser-kb-examples"
 
 # Create bucket
@@ -117,7 +117,7 @@ The Knowledge Base will need read access to this bucket.
 
 1. **Navigate to Amazon Bedrock Console**
    - Go to: https://console.aws.amazon.com/bedrock
-   - Select your region (us-east-1)
+   - Select your region (eu-west-2)
 
 2. **Create Knowledge Base**
    - Click "Knowledge bases" in left menu
@@ -161,7 +161,7 @@ The Knowledge Base will need read access to this bucket.
 ```bash
 # Create Knowledge Base
 KB_NAME="call-summariser-case-check-kb"
-EMBEDDING_MODEL="arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-embed-text-v2:0"
+EMBEDDING_MODEL="arn:aws:bedrock:eu-west-2::foundation-model/amazon.titan-embed-text-v2:0"
 
 # Note: This requires pre-created IAM role and OpenSearch collection
 # See AWS documentation for full CLI setup
@@ -187,7 +187,7 @@ EMBEDDING_MODEL="arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-embed-
 ```python
 import boto3
 
-bedrock_agent = boto3.client("bedrock-agent-runtime", region_name="us-east-1")
+bedrock_agent = boto3.client("bedrock-agent-runtime", region_name="eu-west-2")
 
 response = bedrock_agent.retrieve(
     knowledgeBaseId="YOUR_KB_ID_HERE",
@@ -261,7 +261,7 @@ Add this policy to your Lambda execution role:
         "bedrock:RetrieveAndGenerate"
       ],
       "Resource": [
-        "arn:aws:bedrock:us-east-1:<account-id>:knowledge-base/<kb-id>"
+        "arn:aws:bedrock:eu-west-2:<account-id>:knowledge-base/<kb-id>"
       ]
     },
     {
@@ -270,7 +270,7 @@ Add this policy to your Lambda execution role:
         "bedrock:InvokeModel"
       ],
       "Resource": [
-        "arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-embed-text-v2:0"
+        "arn:aws:bedrock:eu-west-2::foundation-model/amazon.titan-embed-text-v2:0"
       ]
     }
   ]

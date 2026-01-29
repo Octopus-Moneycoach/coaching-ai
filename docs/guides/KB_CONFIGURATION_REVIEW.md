@@ -113,7 +113,7 @@ Policies:
 ```bash
 # Set variables
 KB_BUCKET_NAME="call-summariser-kb-examples-${AWS_ACCOUNT_ID}"
-AWS_REGION="us-east-1"  # Or your preferred region
+AWS_REGION="eu-west-2"  # Or your preferred region
 
 # Create bucket
 aws s3 mb s3://${KB_BUCKET_NAME} --region ${AWS_REGION}
@@ -133,7 +133,7 @@ aws s3 ls s3://${KB_BUCKET_NAME}/examples/
 
 1. Navigate to Amazon Bedrock Console
    - URL: https://console.aws.amazon.com/bedrock
-   - Select region: us-east-1 (or your preferred region)
+   - Select region: eu-west-2 (or your preferred region)
 
 2. Create Knowledge Base
    - Left menu: "Knowledge bases"
@@ -157,7 +157,7 @@ aws s3 ls s3://${KB_BUCKET_NAME}/examples/
 
 5. Select Embeddings Model
    - **Model**: Amazon Titan Embeddings G1 - Text v2.0
-   - **Model ARN**: `arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-embed-text-v2:0`
+   - **Model ARN**: `arn:aws:bedrock:eu-west-2::foundation-model/amazon.titan-embed-text-v2:0`
    - **Dimensions**: 1024 (default)
    - Click "Next"
 
@@ -283,7 +283,7 @@ Create policy document:
         "bedrock:RetrieveAndGenerate"
       ],
       "Resource": [
-        "arn:aws:bedrock:us-east-1:<account-id>:knowledge-base/*"
+        "arn:aws:bedrock:eu-west-2:<account-id>:knowledge-base/*"
       ]
     },
     {
@@ -292,7 +292,7 @@ Create policy document:
         "bedrock:InvokeModel"
       ],
       "Resource": [
-        "arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-embed-text-v2:0"
+        "arn:aws:bedrock:eu-west-2::foundation-model/amazon.titan-embed-text-v2:0"
       ]
     }
   ]
@@ -315,7 +315,7 @@ aws iam put-role-policy \
 ### Before Deployment
 - [ ] 5 PDF documents prepared and reviewed
 - [ ] AWS account has Bedrock access enabled in target region
-- [ ] Decided on region (us-east-1 recommended)
+- [ ] Decided on region (eu-west-2 recommended)
 - [ ] Decided on OpenSearch pricing model (Serverless vs Provisioned)
 
 ### KB Setup (One-Time)

@@ -25,7 +25,7 @@ Use this checklist to deploy the RAG Knowledge Base integration for case checkin
 
 ### Step 1.1: Create S3 Bucket
 ```bash
-AWS_REGION="us-east-1"
+AWS_REGION="eu-west-2"
 BUCKET_NAME="call-summariser-kb-examples"
 
 aws s3 mb s3://${BUCKET_NAME} --region ${AWS_REGION}
@@ -154,12 +154,12 @@ aws lambda get-function-configuration \
         "bedrock:Retrieve",
         "bedrock:RetrieveAndGenerate"
       ],
-      "Resource": "arn:aws:bedrock:us-east-1:*:knowledge-base/*"
+      "Resource": "arn:aws:bedrock:eu-west-2:*:knowledge-base/*"
     },
     {
       "Effect": "Allow",
       "Action": "bedrock:InvokeModel",
-      "Resource": "arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-embed-text-v2:0"
+      "Resource": "arn:aws:bedrock:eu-west-2::foundation-model/amazon.titan-embed-text-v2:0"
     }
   ]
 }

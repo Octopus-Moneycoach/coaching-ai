@@ -8,7 +8,7 @@
 
 - [ ] 5 PDFs ready: Pass-case-check1.pdf, Pass-case-check2.pdf, Fail-case-check.pdf, Fail-case-check2.pdf, Fail-case-check3.pdf
 - [ ] AWS CLI configured
-- [ ] Bedrock access enabled in us-east-1
+- [ ] Bedrock access enabled in eu-west-2
 - [ ] AWS account ID handy
 
 ---
@@ -102,12 +102,12 @@ cat > kb-policy.json <<EOF
     {
       "Effect": "Allow",
       "Action": ["bedrock:Retrieve", "bedrock:RetrieveAndGenerate"],
-      "Resource": "arn:aws:bedrock:us-east-1:*:knowledge-base/*"
+      "Resource": "arn:aws:bedrock:eu-west-2:*:knowledge-base/*"
     },
     {
       "Effect": "Allow",
       "Action": ["bedrock:InvokeModel"],
-      "Resource": "arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-embed-text-v2:0"
+      "Resource": "arn:aws:bedrock:eu-west-2::foundation-model/amazon.titan-embed-text-v2:0"
     }
   ]
 }
