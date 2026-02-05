@@ -24,10 +24,28 @@
         {
           "Variable": "$.redactedTranscriptKey",
           "IsPresent": true,
-          "Next": "PerformCaseCheck"
+          "Next": "NormalizeDirectInput"
         }
       ],
       "Default": "FetchTranscript"
+    },
+    "NormalizeDirectInput": {
+      "Type": "Pass",
+      "Comment": "Normalize direct redactedTranscriptKey input to match pipeline structure",
+      "Parameters": {
+        "meetingId.$": "$.meetingId",
+        "coachName.$": "$.coachName",
+        "forceReprocess.$": "$.forceReprocess",
+        "piiResult": {
+          "redactedTranscriptKey.$": "$.redactedTranscriptKey",
+          "piiEntityCount": 0
+        },
+        "metricsResult": {
+          "callMetrics": null,
+          "metricsKey": "skipped"
+        }
+      },
+      "Next": "PerformCaseCheck"
     },
     "FetchTranscript": {
       "Type": "Task",
@@ -83,6 +101,41 @@
           "BackoffRate": 1.5
         }
       ],
+      "Next": "ExtractMetrics"
+    },
+    "ExtractMetrics": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${ExtractMetricsFunctionArn}",
+        "Payload": {
+          "transcriptKey.$": "$.fetchResult.transcriptKey",
+          "meetingId.$": "$.meetingId",
+          "coachName.$": "$.coachName",
+          "source.$": "$.fetchResult.source",
+          "forceReprocess.$": "$$.Execution.Input.forceReprocess"
+        }
+      },
+      "ResultPath": "$.metricsResult",
+      "ResultSelector": {
+        "callMetrics.$": "$.Payload.callMetrics",
+        "metricsKey.$": "$.Payload.metricsKey"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": ["States.TaskFailed"],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 2,
+          "BackoffRate": 1.5
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "ResultPath": "$.metricsError",
+          "Next": "PIIDetectRedact"
+        }
+      ],
       "Next": "PIIDetectRedact"
     },
     "PIIDetectRedact": {
@@ -97,10 +150,8 @@
           "forceReprocess.$": "$$.Execution.Input.forceReprocess"
         }
       },
-      "ResultPath": "$",
+      "ResultPath": "$.piiResult",
       "ResultSelector": {
-        "meetingId.$": "$.Payload.meetingId",
-        "source.$": "$.Payload.source",
         "redactedTranscriptKey.$": "$.Payload.redactedTranscriptKey",
         "piiEntityCount.$": "$.Payload.piiEntityCount"
       },
@@ -120,9 +171,10 @@
       "Parameters": {
         "FunctionName": "${CaseCheckFunctionArn}",
         "Payload": {
-          "redactedTranscriptKey.$": "$.redactedTranscriptKey",
+          "redactedTranscriptKey.$": "$.piiResult.redactedTranscriptKey",
           "meetingId.$": "$.meetingId",
-          "forceReprocess.$": "$$.Execution.Input.forceReprocess"
+          "forceReprocess.$": "$$.Execution.Input.forceReprocess",
+          "callMetrics.$": "$.metricsResult.callMetrics"
         }
       },
       "ResultPath": "$.caseCheckResult",
@@ -171,7 +223,7 @@
       "Parameters": {
         "FunctionName": "${AssessVulnerabilityFunctionArn}",
         "Payload": {
-          "redactedTranscriptKey.$": "$.redactedTranscriptKey",
+          "redactedTranscriptKey.$": "$.piiResult.redactedTranscriptKey",
           "meetingId.$": "$.meetingId"
         }
       },
@@ -221,7 +273,7 @@
         "Payload": {
           "meetingId.$": "$.meetingId",
           "caseCheckKey.$": "$.caseCheckResult.caseKey",
-          "redactedTranscriptKey.$": "$.redactedTranscriptKey"
+          "redactedTranscriptKey.$": "$.piiResult.redactedTranscriptKey"
         }
       },
       "ResultPath": "$.a2iResult",

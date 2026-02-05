@@ -312,6 +312,7 @@ Resources:
         FetchTranscriptFunctionArn: !GetAtt FetchTranscriptFunction.Arn
         NormaliseRolesFunctionArn: !GetAtt NormaliseRolesFunction.Arn
         PIIDetectRedactFunctionArn: !GetAtt PIIDetectRedactFunction.Arn
+        ExtractMetricsFunctionArn: !GetAtt ExtractMetricsFunction.Arn
         CaseCheckFunctionArn: !GetAtt CaseCheckFunction.Arn
         AssessVulnerabilityFunctionArn: !GetAtt AssessVulnerabilityFunction.Arn
         A2IReviewFunctionArn: !GetAtt A2IReviewFunction.Arn
@@ -324,6 +325,8 @@ Resources:
             FunctionName: !Ref NormaliseRolesFunction
         - LambdaInvokePolicy:
             FunctionName: !Ref PIIDetectRedactFunction
+        - LambdaInvokePolicy:
+            FunctionName: !Ref ExtractMetricsFunction
         - LambdaInvokePolicy:
             FunctionName: !Ref CaseCheckFunction
         - LambdaInvokePolicy:
@@ -486,6 +489,21 @@ Resources:
                 - bedrock:RetrieveAndGenerate
               Resource:
                 - !Sub "arn:aws:bedrock:${AWS::Region}:*:knowledge-base/*"
+
+  ### Extract Metrics Function (fast, deterministic metrics extraction) ###
+  ExtractMetricsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: summariser/
+      Runtime: python3.11
+      Layers:
+        - !Ref SharedDependenciesLayer
+      Handler: extract_metrics.app.lambda_handler
+      Timeout: 30  # Fast - no LLM calls
+      MemorySize: 256
+      Policies:
+        - S3CrudPolicy:
+            BucketName: !If [CreateSummaryBucket, !Ref SummaryBucket, !Ref SummaryBucketName]
 
   ### Assess Vulnerability Function (triggered when case check identifies vulnerabilities) ###
   AssessVulnerabilityFunction:

@@ -299,6 +299,11 @@ scripts/*.json
 scripts/*.log
 scripts/*_log.txt
 
+# Data files in utilities (local analysis data, not code)
+utilities/data/*.json
+utilities/data/*.csv
+utilities/data/*.pkl
+
 # POC Analysis - Temporary scripts (one-off analysis)
 scripts/analyze_*.py
 scripts/check_*.py
@@ -341,3 +346,8 @@ scripts/generate_stakeholder_report.py
 scripts/import_aveni_api_to_dynamodb.py
 scripts/import_aveni_from_api_results.py
 scripts/import_aveni_from_golden_dataset.py
+
+# One-time data export/transform scripts
+scripts/export_*.py
+scripts/transform_*.py
+scripts/zoom_*.py
